@@ -6,25 +6,27 @@ var TestHelper = require('../../../../TestHelper');
 
 
 var modelingModule = require('../../../../../lib/features/modeling'),
+    bpmnSnappingModule = require('../../../../../lib/features/snapping'),
+    resizeModule = require('diagram-js/lib/features/resize'),
     coreModule = require('../../../../../lib/core');
 
 
 var resizeTRBL = require('diagram-js/lib/features/resize/ResizeUtil').resizeTRBL;
 
 
-describe.only('features/modeling - layout participant', function() {
+describe('features/modeling - layout participant', function() {
 
 
   describe('should layout after resizing lanes', function() {
 
     var diagramXML = require('./lanes.bpmn');
 
-    var testModules = [ coreModule, modelingModule ];
+    var testModules = [ coreModule, resizeModule, bpmnSnappingModule, modelingModule ];
 
     beforeEach(bootstrapModeler(diagramXML, { modules: testModules }));
 
 
-    it('execute', inject(function(elementRegistry, modeling) {
+    it.only('execute', inject(function(elementRegistry, modeling) {
 
       // given
       var laneShape = elementRegistry.get('Lane_A'),
