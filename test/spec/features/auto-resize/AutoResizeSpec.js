@@ -10,7 +10,8 @@ var pick = require('lodash/object/pick'),
 var autoResizeModule = require('../../../../lib/features/auto-resize'),
     modelingModule = require('../../../../lib/features/modeling'),
     createModule = require('diagram-js/lib/features/create'),
-    coreModule = require('../../../../lib/core');
+    coreModule = require('../../../../lib/core'),
+    canvasEvent = require('../../../util/MockEvents').createCanvasEvent;
 
 function getBounds(shape) {
   return pick(shape, ['x', 'y', 'width', 'height']);
@@ -325,6 +326,115 @@ describe('features/auto-resize', function() {
       var expectedBounds = assign(originalBounds, { width: 565 });
 
       expect(laneShape).to.have.bounds(expectedBounds);
+    }));
+
+  });
+
+
+  describe('sub processes', function() {
+
+    var diagramXML = require('./AutoResize.sub-processes.bpmn');
+
+    beforeEach(bootstrapModeler(diagramXML, { modules: testModules }));
+
+    it('should auto-resize after moving children', inject(function(elementRegistry, modeling) {
+
+      // given
+      var subProcessShape = elementRegistry.get('SubProcess_1'),
+          taskShape = elementRegistry.get('Task_1'),
+          startEventShape = elementRegistry.get('StartEvent_1');
+
+      var originalBounds = getBounds(subProcessShape);
+
+      // when
+      modeling.moveElements([taskShape, startEventShape], { x: 200, y: 0 }, subProcessShape);
+
+      // then
+      var expectedBounds = assign(originalBounds, { width: 567 });
+
+      expect(subProcessShape).to.have.bounds(expectedBounds);
+
+    }));
+
+
+    it('should auto-resize to fit new element', inject(function(elementRegistry, modeling) {
+
+      // given
+      var subProcessShape = elementRegistry.get('SubProcess_1');
+
+      var originalBounds = getBounds(subProcessShape);
+
+      // when
+      modeling.createShape({ type: 'bpmn:Task' }, { x: 450, y: 250 }, subProcessShape);
+
+      // then
+      var expectedBounds = assign(originalBounds, { width: 480, height: 298 });
+
+      expect(subProcessShape).to.have.bounds(expectedBounds);
+
+    }));
+
+
+    it('should auto-resize after dropping selection inside',
+      inject(function(selection, move, dragging, elementRegistry, modeling) {
+
+      // given
+      var subProcessShape = elementRegistry.get('SubProcess_1'),
+          taskShape = elementRegistry.get('Task_1'),
+          startEventShape = elementRegistry.get('StartEvent_1');
+
+      var originalBounds = getBounds(subProcessShape);
+
+      // when
+      selection.select([taskShape, startEventShape]);
+
+      move.start(canvasEvent({ x: 265, y: 235 }), startEventShape);
+
+      dragging.hover({
+        element: subProcessShape,
+        gfx: elementRegistry.getGraphics(subProcessShape)
+      });
+
+      dragging.move(canvasEvent({ x: 450, y: 235 }));
+
+      dragging.end();
+
+      // then
+      var expectedBounds = assign(originalBounds, { width: 552 });
+
+      expect(subProcessShape).to.have.bounds(expectedBounds);
+
+    }));
+
+
+    it('should not auto-resize after dropping selection outside',
+      inject(function(selection, canvas, move, dragging, elementRegistry, modeling) {
+
+      // given
+      var subProcessShape = elementRegistry.get('SubProcess_1'),
+          taskShape = elementRegistry.get('Task_1'),
+          startEventShape = elementRegistry.get('StartEvent_1'),
+          rootShape = canvas.getRootElement();
+
+      var originalBounds = getBounds(subProcessShape);
+
+      // when
+      selection.select([taskShape, startEventShape]);
+
+      move.start(canvasEvent({ x: 390, y: 110 }), taskShape);
+
+      dragging.hover({
+        element: rootShape,
+        gfx: elementRegistry.getGraphics(rootShape)
+      });
+
+      dragging.move(canvasEvent({ x: 600, y: 110 }));
+
+      dragging.end();
+
+      // then
+      expect(subProcessShape).to.have.bounds(originalBounds);
+
     }));
 
   });
