@@ -289,7 +289,6 @@ describe('features/auto-resize', function() {
 
   });
 
-
   describe('lane', function() {
 
     var diagramXML = require('./AutoResize.lanes.bpmn');
@@ -329,7 +328,6 @@ describe('features/auto-resize', function() {
     }));
 
   });
-
 
   describe('sub processes', function() {
 
@@ -434,6 +432,46 @@ describe('features/auto-resize', function() {
 
       // then
       expect(subProcessShape).to.have.bounds(originalBounds);
+
+    }));
+
+  });
+
+  describe('nested sub processes', function() {
+
+    var diagramXML = require('./AutoResize.nested-sub-processes.bpmn');
+
+    beforeEach(bootstrapModeler(diagramXML, { modules: testModules }));
+
+    it('should recursively expand parent element', inject(function(elementRegistry, modeling){
+
+      var taskShape = elementRegistry.get('Task_1'),
+          subProcessShape_2 = elementRegistry.get('SubProcess_2'),
+          subProcessShape_3 = elementRegistry.get('SubProcess_3');
+
+      var originalBounds = getBounds(subProcessShape_2);
+
+      modeling.moveElements([taskShape], { x: 100, y: 0 }, subProcessShape_3);
+
+      var expectedBounds = assign(originalBounds, { width: 755 });
+
+      expect(subProcessShape_2).to.have.bounds(expectedBounds);
+
+    }));
+
+    it('should recursively expand last parent element', inject(function(elementRegistry, modeling){
+
+      var taskShape = elementRegistry.get('Task_1'),
+          subProcessShape_1 = elementRegistry.get('SubProcess_1'),
+          subProcessShape_3 = elementRegistry.get('SubProcess_3');
+
+      var originalBounds = getBounds(subProcessShape_1);
+
+      modeling.moveElements([taskShape], { x: 100, y: 0 }, subProcessShape_3);
+
+      var expectedBounds = assign(originalBounds, { width: 875 });
+
+      expect(subProcessShape_1).to.have.bounds(expectedBounds);
 
     }));
 
