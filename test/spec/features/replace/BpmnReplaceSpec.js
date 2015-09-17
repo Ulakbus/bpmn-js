@@ -857,4 +857,24 @@ describe('features/replace', function() {
 
   });
 
+
+  describe.only('options chooser', function () {
+
+    var diagramXML = require('./cancel-events.bpmn');
+
+    beforeEach(bootstrapModeler(diagramXML, { modules: testModules }));
+
+    it('should not show cancel event in replacement menu', inject(function(elementRegistry, bpmnReplace) {
+      // given
+      var endEvent = elementRegistry.get('EndEvent_1');
+
+      // when
+      var replaceOptions = bpmnReplace.getReplaceOptions(endEvent);
+
+      // then
+      expect(replaceOptions).to.have.length(8);
+    }));
+
+  });
+
 });
